@@ -9,7 +9,13 @@ module Faraday
     end
 
     def call(env)
-      env[:request_headers]['Content-Type'] = 'application/x-yaml'
+      # Only set the request's Content-Type when actually needed. (Some APIs
+      # break when you send a Content-Type header and an empty body on GET 
+      # requests.)
+      if [:put, :post].include?(env[:method])
+        env[:request_headers]['Content-Type'] = 'application/x-yaml'
+      end
+
       if env[:body] && !env[:body].respond_to?(:to_str)
         env[:body] = env[:body].to_yaml
       end
