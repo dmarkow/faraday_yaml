@@ -1,51 +1,61 @@
 require 'spec_helper'
 
-describe "Using the YAML Response Middleware" do
+describe Faraday::Response::YAML do
 
-  before do
-    @stubs = Faraday::Adapter::Test::Stubs.new
-    @conn = Faraday.new do |conn|
-      conn.adapter :test, @stubs
-      conn.use Faraday::Response::YAML
-    end
-  end
+  context "when used" do
+    let(:yaml) { Faraday::Response::YAML.new }
 
-  context "z" do
-    before do
-      @yaml = Faraday::Response::YAML.new
-    end
-
-    it "should handle an empty response" do
-      empty = @yaml.on_complete(:body => '')
+    it "handles an empty response" do
+      empty = yaml.on_complete(:body => '')
       empty.should be_nil
     end
+
+    it "handles hashes" do
+      me = yaml.on_complete(:body => "--- \nuser:\n  name: Dylan Markow\n  username: dmarkow\n")
+      me.class.should == Hash
+      me['user']['name'].should == 'Dylan Markow'
+      me['user']['username'].should == 'dmarkow'
+    end
+
+    it "handles arrays" do
+      values = yaml.on_complete(:body => "--- \n- 123\n- 456\n")
+      values.class.should == Array
+      values.first.should == 123
+      values.last.should == 456
+    end
+
+    it "handles arrays of hashes" do
+      values = yaml.on_complete(:body => "--- \n- user:\n    name: Dylan Markow\n    username: dmarkow\n- user:\n    name: Rick Olson\n    username: technoweenie\n")
+      values.class.should == Array
+      values.first['user']['username'].should == 'dmarkow'
+      values.last['user']['username'].should == 'technoweenie'
+    end
+
+    it "handles mixed arrays" do
+      values = yaml.on_complete(:body => "--- \n- 123\n- user: \n    name: Dylan Markow\n    username: dmarkow\n- 456\n")
+      values.class.should == Array
+      values.first.should == 123
+      values.last.should == 456
+      values[1]['user']['username'].should == 'dmarkow'
+    end
   end
 
-  context "with a valid YAML response" do
-    before do
-      @stubs.get("/me") {[200, {'Content-Type' => 'application/x-yaml'}, "---\nuser:\n  name: Dylan Markow\n  username: dmarkow"]}
+  context "integration tests" do
+    let(:stubs) { Faraday::Adapter::Test::Stubs.new }
+    let(:conn) do
+      Faraday.new do |conn|
+        conn.adapter :test, stubs
+        conn.use Faraday::Response::YAML
+      end
     end
 
-    it "parses the response into a Hash" do
-      me = @conn.get("/me").body['user']
-      me.should be_a(Hash)
-      me['name'].should == "Dylan Markow"
-      me['username'].should == "dmarkow"
-    end
-  end
-
-  context "with an empty response" do
-    before do
-      @stubs.get("/me") {[200, {'Content-Type' => 'application/x-yaml'}, ""]}
-      @response = @conn.get("/me")
-    end
-
-    it "still uses the status code" do
-      @response.status.should == 200
-    end
-
-    it "should skip empty content" do
-      @response.body.should be_nil
+    it "creates a hash from the body" do
+      stubs.get("/me") {[200, {'Content-Type' => 'application/x-yaml'}, "---\nuser:\n  name: Dylan Markow\n  username: dmarkow"]}
+      me = conn.get("/me").body
+      me.class.should == Hash
+      me['user']['name'].should == "Dylan Markow"
+      me['user']['username'].should == "dmarkow"
     end
   end
 end
+
