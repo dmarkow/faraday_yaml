@@ -4,9 +4,20 @@ describe "Using the YAML Response Middleware" do
 
   before do
     @stubs = Faraday::Adapter::Test::Stubs.new
-    @conn = Faraday::Connection.new do |conn|
+    @conn = Faraday.new do |conn|
       conn.adapter :test, @stubs
       conn.use Faraday::Response::YAML
+    end
+  end
+
+  context "z" do
+    before do
+      @yaml = Faraday::Response::YAML.new
+    end
+
+    it "should handle an empty response" do
+      empty = @yaml.on_complete(:body => '')
+      empty.should be_nil
     end
   end
 
@@ -20,20 +31,6 @@ describe "Using the YAML Response Middleware" do
       me.should be_a(Hash)
       me['name'].should == "Dylan Markow"
       me['username'].should == "dmarkow"
-    end
-  end
-
-  context "with a nil response" do
-    before do
-      @stubs.get("/me") {[200, {'Content-Type' => 'application/x-yaml'}, nil]}
-      @response = @conn.get("/me")
-    end
-
-    it "still uses the status code" do
-      @response.status.should == 200
-    end
-    it "should skip empty content" do
-      @response.body.should be_nil
     end
   end
 

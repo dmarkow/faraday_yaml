@@ -1,2 +1,9 @@
-require 'faraday_yaml/request/yaml.rb'
-require 'faraday_yaml/response/yaml.rb'
+require 'faraday'
+
+class Faraday::Request
+  autoload :YAML, 'faraday/request/yaml.rb'
+end
+
+class Faraday::Response
+  autoload :YAML, 'faraday/response/yaml.rb'
+end
