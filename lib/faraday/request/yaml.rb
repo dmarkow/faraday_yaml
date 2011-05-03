@@ -4,10 +4,6 @@ module Faraday
   class Request::YAML < Faraday::Middleware
     dependency 'yaml'
 
-    def initialize(app)
-      @app = app
-    end
-
     def call(env)
       # Only set the request's Content-Type when actually needed. (Some APIs
       # break when you send a Content-Type header and an empty body on GET 
