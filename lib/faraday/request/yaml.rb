@@ -2,10 +2,10 @@ require 'faraday'
 
 module Faraday
   class Request::YAML < Faraday::Middleware
-    begin
-      require 'yaml'
-    rescue LoadError, NameError => e
-      self.load_error = e
+    dependency 'yaml'
+
+    def initialize(app)
+      @app = app
     end
 
     def call(env)

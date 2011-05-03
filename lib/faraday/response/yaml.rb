@@ -2,11 +2,7 @@ require 'faraday'
 
 module Faraday
   class Response::YAML < Response::Middleware
-    begin
-      require 'yaml'
-    rescue LoadError, NameError => e
-      self.load_error = e
-    end
+    dependency 'yaml'
 
     def parse(body)
       case body
