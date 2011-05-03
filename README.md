@@ -8,8 +8,9 @@ Yeah, JSON is at least 2.9x cooler than YAML, but sometimes you're stuck using i
 
 ### Examples
 
+Github's YAML API is currently deprecated; it works for the response example, but not for the request example.
+
 #### Response
-Here's an example: (Github's YAML API is currently deprecated, but it works for the sake of this example)
 
     conn = Faraday::Connection.new(:url => "http://github.com") do |builder|
       builder.adapter Faraday.default_adapter
